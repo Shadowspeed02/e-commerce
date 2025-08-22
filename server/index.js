@@ -5,15 +5,12 @@ import * as dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const PROJECT_ROOT = path.resolve(__dirname, '..');
 import UserRouter from "./routes/User.js";
 import ProductRoutes from "./routes/Products.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const PROJECT_ROOT = path.resolve(__dirname, '..');
 
 dotenv.config();
 
@@ -34,10 +31,6 @@ app.use((err, req, res, next) => {
 });
 
 // API routes
-app.use("/api/user/", UserRouter);
-app.use("/api/products/", ProductRoutes);
-
-// API routes first
 app.use("/api/user/", UserRouter);
 app.use("/api/products/", ProductRoutes);
 
@@ -69,11 +62,16 @@ if (process.env.NODE_ENV === "production") {
     app.use(express.static(buildPath));
 
     // Handle client-side routing
-    app.get("*", (req, res) => {
+    app.get("*", (req, res, next) => {
       if (req.path.startsWith('/api')) {
         return next();
       }
-      res.sendFile(path.join(buildPath, "index.html"));
+      res.sendFile(path.join(buildPath, "index.html"), (err) => {
+        if (err) {
+          console.error('Error sending file:', err);
+          res.status(500).send('Error loading application');
+        }
+      });
     });
   } else {
     console.error('No build directory found in any of the expected locations');
