@@ -2,8 +2,14 @@ import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
 import * as dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 import UserRouter from "./routes/User.js";
 import ProductRoutes from "./routes/Products.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 dotenv.config();
 
 const app = express();
@@ -22,14 +28,25 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.get("/", async (req, res) => {
-  res.status(200).json({
-    message: "Hello GFG Developers",
-  });
-});
-
+// API routes
 app.use("/api/user/", UserRouter);
 app.use("/api/products/", ProductRoutes);
+
+// Serve static files from the React app
+if (process.env.NODE_ENV === "production") {
+  const clientBuildPath = path.join(__dirname, "../client/build");
+  app.use(express.static(clientBuildPath));
+
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(clientBuildPath, "index.html"));
+  });
+} else {
+  app.get("/", (req, res) => {
+    res.status(200).json({
+      message: "Hello GFG Developers",
+    });
+  });
+}
 
 const connectDB = () => {
   mongoose.set("strictQuery", true);
