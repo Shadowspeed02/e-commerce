@@ -2,7 +2,11 @@ services:
   - type: web
     name: ecommerce-website
     env: node
-    buildCommand: npm install && npm run build
+    buildCommand: |
+      npm install
+      npm run build
+      mkdir -p server/build
+      cp -r client/build/* server/build/
     startCommand: npm start
     envVars:
       - key: NODE_ENV
@@ -11,4 +15,10 @@ services:
         sync: false
       - key: JWT
         sync: false
+      - key: PORT
+        value: 8080
     healthCheckPath: /
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

@@ -34,7 +34,7 @@ app.use("/api/products/", ProductRoutes);
 
 // Serve static files from the React app
 if (process.env.NODE_ENV === "production") {
-  const clientBuildPath = path.join(__dirname, "../client/build");
+  const clientBuildPath = path.join(__dirname, "./build");
   app.use(express.static(clientBuildPath));
 
   app.get("*", (req, res) => {
