@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import * as dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 import UserRouter from "./routes/User.js";
 import ProductRoutes from "./routes/Products.js";
 
@@ -34,11 +35,26 @@ app.use("/api/products/", ProductRoutes);
 
 // Serve static files from the React app
 if (process.env.NODE_ENV === "production") {
-  const clientBuildPath = path.join(__dirname, "./build");
+  // Log the current directory and build path for debugging
+  console.log('Current directory:', __dirname);
+  const clientBuildPath = path.resolve(__dirname, "build");
+  console.log('Build path:', clientBuildPath);
+  
+  // Serve static files
   app.use(express.static(clientBuildPath));
 
+  // Handle all other routes by serving index.html
   app.get("*", (req, res) => {
-    res.sendFile(path.join(clientBuildPath, "index.html"));
+    const indexPath = path.join(clientBuildPath, "index.html");
+    console.log('Attempting to serve:', indexPath);
+    
+    // Check if the file exists before sending
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      console.error('index.html not found at:', indexPath);
+      res.status(404).send('Build files not found');
+    }
   });
 } else {
   app.get("/", (req, res) => {

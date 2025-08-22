@@ -8,11 +8,12 @@
     "install-server": "cd server && npm install",
     "install-client": "cd client && npm install",
     "install-all": "npm install && npm run install-server && npm run install-client",
-    "build": "npm install && cd client && npm install && npm run build && cp -r build ../server/",
+    "build": "cd client && npm install && npm run build",
+    "postbuild": "mkdir -p ./server/build && cp -r ./client/build/* ./server/build/",
     "server": "cd server && npm run dev",
     "client": "cd client && npm start",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "start": "cd server && node index.js"
+    "start": "node server/index.js"
   },
   "keywords": [
     "ecommerce",

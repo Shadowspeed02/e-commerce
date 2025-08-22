@@ -3,10 +3,12 @@ services:
     name: ecommerce-website
     env: node
     buildCommand: |
-      npm install
+      npm ci
       npm run build
-      mkdir -p server/build
-      cp -r client/build/* server/build/
+      mkdir -p ./server/build
+      cp -r ./client/build/* ./server/build/
+      chmod +x ./verify-build.sh
+      ./verify-build.sh
     startCommand: npm start
     envVars:
       - key: NODE_ENV
