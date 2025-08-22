@@ -6,10 +6,11 @@
   "type": "module",
   "scripts": {
     "install-deps": "npm install && cd server && npm install && cd ../client && npm install",
-    "build": "cd client && npm install && npm run build",
+    "build": "cd client && npm install && npm run build && mkdir -p ../server/build && cp -r build/* ../server/build/",
     "server": "cd server && npm run dev",
     "client": "cd client && npm start",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "heroku-postbuild": "cd client && npm install && npm run build && mkdir -p ../server/build && cp -r build/* ../server/build/",
     "start": "cd server && npm install && node index.js"
   },
   "keywords": [

@@ -34,53 +34,47 @@ app.use((err, req, res, next) => {
 app.use("/api/user/", UserRouter);
 app.use("/api/products/", ProductRoutes);
 
-// Then handle static files and client routing
+// Serve static files in production
 if (process.env.NODE_ENV === "production") {
-  console.log('Current directory:', __dirname);
-  console.log('Project root:', PROJECT_ROOT);
-  
-  // Try multiple possible build locations
-  const buildPaths = [
-    path.join(PROJECT_ROOT, 'client/build'),
-    path.join(PROJECT_ROOT, 'build'),
-    path.join(__dirname, 'build'),
-    path.join(process.cwd(), 'client/build')
-  ];
+  const buildPath = path.join(__dirname, "build");
+  console.log('Static files directory:', buildPath);
 
-  let buildPath = null;
-  for (const path of buildPaths) {
-    console.log('Checking build path:', path);
-    if (fs.existsSync(path)) {
-      buildPath = path;
-      console.log('Found build directory at:', buildPath);
-      break;
-    }
+  // First, verify the build directory exists
+  if (!fs.existsSync(buildPath)) {
+    console.error(`Build directory not found at: ${buildPath}`);
+    fs.mkdirSync(buildPath, { recursive: true });
+    console.log('Created build directory');
   }
 
-  if (buildPath) {
-    // Serve static files
-    app.use(express.static(buildPath));
+  // List contents of build directory
+  console.log('Build directory contents:', fs.readdirSync(buildPath));
 
-    // Handle client-side routing
-    app.get("*", (req, res, next) => {
-      if (req.path.startsWith('/api')) {
-        return next();
-      }
-      res.sendFile(path.join(buildPath, "index.html"), (err) => {
+  // Serve static files
+  app.use(express.static(buildPath));
+
+  // Handle client-side routing
+  app.get("*", (req, res, next) => {
+    // Skip API routes
+    if (req.path.startsWith('/api')) {
+      return next();
+    }
+
+    const indexPath = path.join(buildPath, "index.html");
+    console.log('Attempting to serve:', indexPath);
+
+    // Check if index.html exists
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath, (err) => {
         if (err) {
           console.error('Error sending file:', err);
           res.status(500).send('Error loading application');
         }
       });
-    });
-  } else {
-    console.error('No build directory found in any of the expected locations');
-    app.get("*", (req, res) => {
-      if (!req.path.startsWith('/api')) {
-        res.status(404).send('Build files not found');
-      }
-    });
-  }
+    } else {
+      console.error('index.html not found at:', indexPath);
+      res.status(404).send('Application files not found');
+    }
+  });
 } else {
   app.get("/", (req, res) => {
     res.status(200).json({

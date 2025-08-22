@@ -3,12 +3,13 @@ services:
     name: ecommerce-website
     env: node
     buildCommand: |
-      echo "Installing dependencies..."
-      npm run install-deps
-      echo "Building client..."
-      npm run build
-      echo "Listing directory structure..."
-      ls -R
+      npm install
+      cd client && npm install && npm run build
+      cd ..
+      mkdir -p server/build
+      cp -r client/build/* server/build/
+      echo "Verifying build files..."
+      ls -la server/build/
     startCommand: npm start
     envVars:
       - key: NODE_ENV
