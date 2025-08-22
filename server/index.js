@@ -5,6 +5,10 @@ import * as dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const PROJECT_ROOT = path.resolve(__dirname, '..');
 import UserRouter from "./routes/User.js";
 import ProductRoutes from "./routes/Products.js";
 
@@ -33,29 +37,52 @@ app.use((err, req, res, next) => {
 app.use("/api/user/", UserRouter);
 app.use("/api/products/", ProductRoutes);
 
-// Serve static files from the React app
-if (process.env.NODE_ENV === "production") {
-  // Log the current directory and build path for debugging
-  console.log('Current directory:', __dirname);
-  const clientBuildPath = path.resolve(__dirname, "build");
-  console.log('Build path:', clientBuildPath);
-  
-  // Serve static files
-  app.use(express.static(clientBuildPath));
+// API routes first
+app.use("/api/user/", UserRouter);
+app.use("/api/products/", ProductRoutes);
 
-  // Handle all other routes by serving index.html
-  app.get("*", (req, res) => {
-    const indexPath = path.join(clientBuildPath, "index.html");
-    console.log('Attempting to serve:', indexPath);
-    
-    // Check if the file exists before sending
-    if (fs.existsSync(indexPath)) {
-      res.sendFile(indexPath);
-    } else {
-      console.error('index.html not found at:', indexPath);
-      res.status(404).send('Build files not found');
+// Then handle static files and client routing
+if (process.env.NODE_ENV === "production") {
+  console.log('Current directory:', __dirname);
+  console.log('Project root:', PROJECT_ROOT);
+  
+  // Try multiple possible build locations
+  const buildPaths = [
+    path.join(PROJECT_ROOT, 'client/build'),
+    path.join(PROJECT_ROOT, 'build'),
+    path.join(__dirname, 'build'),
+    path.join(process.cwd(), 'client/build')
+  ];
+
+  let buildPath = null;
+  for (const path of buildPaths) {
+    console.log('Checking build path:', path);
+    if (fs.existsSync(path)) {
+      buildPath = path;
+      console.log('Found build directory at:', buildPath);
+      break;
     }
-  });
+  }
+
+  if (buildPath) {
+    // Serve static files
+    app.use(express.static(buildPath));
+
+    // Handle client-side routing
+    app.get("*", (req, res) => {
+      if (req.path.startsWith('/api')) {
+        return next();
+      }
+      res.sendFile(path.join(buildPath, "index.html"));
+    });
+  } else {
+    console.error('No build directory found in any of the expected locations');
+    app.get("*", (req, res) => {
+      if (!req.path.startsWith('/api')) {
+        res.status(404).send('Build files not found');
+      }
+    });
+  }
 } else {
   app.get("/", (req, res) => {
     res.status(200).json({

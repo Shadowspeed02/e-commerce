@@ -3,13 +3,18 @@ services:
     name: ecommerce-website
     env: node
     buildCommand: |
-      npm ci
+      echo "Installing dependencies..."
+      npm run install-deps
+      echo "Building client..."
       npm run build
-      mkdir -p ./server/build
-      cp -r ./client/build/* ./server/build/
-      chmod +x ./verify-build.sh
-      ./verify-build.sh
+      echo "Listing directory structure..."
+      ls -R
     startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8080
     envVars:
       - key: NODE_ENV
         value: production
